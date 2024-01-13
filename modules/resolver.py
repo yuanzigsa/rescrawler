@@ -1,0 +1,95 @@
+import re
+import paramiko
+import modules.sync as sync
+from modules.logger import logging
+from modules.xdbSearcher import XdbSearcher
+
+
+# 提取域名
+def extract_domains(file_path):
+    domains = set()
+    with open(file_path, 'r') as file:
+        for line in file:
+            match = re.search(r'https://(.*?\.com|.*?\.cn)', line)
+            if match:
+                domains.add(match.group(1))
+    return domains
+
+
+# 获取其他地域远程主机的域名解析结果
+def get_remote_ip_resolve(remote_host, key_path, domains):
+    try:
+        # 创建 SSH 客户端
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # 连接到远程服务器
+        ssh.connect(remote_host, username='root', key_filename=key_path)
+        # 执行域名解析命令
+        domains_resolve_ip = {}
+        for domain in domains:
+            command = f"nslookup {domain}"
+            stdin, stdout, stderr = ssh.exec_command(command)
+            # 获取命令执行结果
+            result = stdout.read().decode('utf-8')
+            ipv4_addresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result)
+            domains_resolve_ip[domain] = ipv4_addresses
+        ssh.close()
+        return domains_resolve_ip
+    except Exception as e:
+        print(f"连接到目标服务器{remote_host}出错: {e}")
+        return None
+
+
+# 查询IP归属地
+def ip_region_search(ip_list):
+    # 加载整个 xdb
+    dbPath = "res/china.xdb"
+    cb = XdbSearcher.loadContentFromFile(dbfile=dbPath)
+    # 仅需要使用上面的全文件缓存创建查询对象, 不需要传源 xdb 文件
+    searcher = XdbSearcher(contentBuff=cb)
+    # 执行查询
+    ipinfo = {}
+    for ip in ip_list:
+        result = searcher.search(ip)
+        # 提取需要的信息
+        province = result.split('|')[2]
+        city = result.split('|')[3]
+        district = result.split('|')[4]
+        isp = result.split('|')[-3]
+        ipinfo[ip] = {}
+        ipinfo[ip]['province'] = province
+        ipinfo[ip]['city'] = city
+        ipinfo[ip]['district'] = district
+        ipinfo[ip]['isp'] = isp
+        logging.info(f"IP:{ip} 省: {province}, 市: {city}, 区: {district}, 运营商: {isp}")
+    # 关闭searcher
+    searcher.close()
+    return ipinfo
+
+
+# 获取匹配的IP地址
+def get_match_region_ip():
+    resolve_node = sync.read_from_json_file("config/resolve_node.json")
+    key_path = "config/id_rsa"
+    download_url_path = "res/download_url.txt"
+
+    # 提取下载url中的域名
+    domains = extract_domains(download_url_path)
+    logging.info(f"解析完成，共解析到{len(domains)}个域名，分别是：{domains}")
+
+    # 通过在各个远程节点将域名解析为IP
+    # 可以定义哪些用哪些节点以外的节点来进行解析，这样得到的结果都是想要的地区
+    dns_info = {}
+    for node in resolve_node:
+        resolve_node_ip = resolve_node[node]
+        domains_resolve_ip = get_remote_ip_resolve(resolve_node_ip, key_path, domains)
+        dns_info[node] = {}
+        for domain, ip_list in domains_resolve_ip.items():
+            dns_info[node][domain] = {}
+            ipinfo = ip_region_search(ip_list)
+            dns_info[node][domain] = ipinfo
+    # 写入本地文件
+    sync.write_to_json_file(dns_info, "info/dns_info.json")
+    return dns_info
+
+

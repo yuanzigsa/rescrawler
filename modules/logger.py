@@ -6,7 +6,7 @@ from colorlog import ColoredFormatter  # 导入ColoredFormatter
 log_directory = 'log'
 if not os.path.exists(log_directory):
     os.makedirs(log_directory)
-log_file_path = os.path.join(log_directory, '../log/crealer.log')
+log_file_path = os.path.join(log_directory, '../log/crawler.log')
 
 # 配置控制台输出的日志格式和颜色
 console_formatter = ColoredFormatter(

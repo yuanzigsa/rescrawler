@@ -41,6 +41,6 @@ def read_urls_from_file(file_path: str):
         return [line.strip() for line in file.readlines() if line.strip()]
 
 with sync_playwright() as playwright:
-    urls = read_urls_from_file('url.txt')
+    urls = read_urls_from_file('../res/url.txt')
     for url in urls:
         run(playwright, url)

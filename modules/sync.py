@@ -31,18 +31,15 @@ def run_command_on_server(server, command, output_dict):
         output = stdout.read().decode('utf-8')
         error = stderr.read().decode('utf-8')
         result = f"在 {server['host']} 上执行命令的输出：\n{output if output else error}"
-
+        ssh.close()
+        output_dict[server['host']] = result
     except Exception as e:
         result = f"在 {server['host']} 上执行命令失败: {e}"
-    finally:
-        ssh.close()
         output_dict[server['host']] = result
 
 
 # 推送文件到远程服务器
-def put_file_to_server(filename, remote_path="/root/"):
-    local_file_path = filename
-    remote_file_path = os.path.join(remote_path, filename)
+def put_file_to_server(local_file_path, remote_file_path):
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

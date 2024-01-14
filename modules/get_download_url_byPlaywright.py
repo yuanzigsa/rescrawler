@@ -4,6 +4,7 @@ import time
 def run(playwright: Playwright, browser, url: str) -> None:
     page = browser.new_page()
     page.goto(url)
+    page.wait_for_load_state("load")
     page.get_by_role("link", name="立即下载").click()
     page.wait_for_timeout(100)
     with page.expect_download() as download_info:
@@ -15,7 +16,7 @@ def run(playwright: Playwright, browser, url: str) -> None:
     page.close()
 
 def main(playwright: Playwright, urls: list) -> None:
-    browser = playwright.chromium.launch(headless=True)
+    browser = playwright.chromium.launch(headless=False)
     for url in urls:
         run(playwright, browser, url)
     browser.close()
@@ -27,7 +28,7 @@ def read_urls_from_file(file_path: str):
 start_time = time.time()
 
 with sync_playwright() as playwright:
-    urls = read_urls_from_file('url.txt')
+    urls = read_urls_from_file('../res/url.txt')
     main(playwright, urls)
 
 print('总用时：' + f'{time.time() - start_time:.2f}')

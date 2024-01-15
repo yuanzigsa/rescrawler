@@ -10,7 +10,6 @@ from modules.logger import logging
 # Author : yuanzi
 
 
-# 支持单IP以及多IP自动识别按小时进行轮询下载
 logo = f"""开始启动ResCrawler程序...\n
  ███████                     ██████                               ██               
 ░██░░░░██                   ██░░░░██                             ░██               

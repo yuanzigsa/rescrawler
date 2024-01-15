@@ -35,7 +35,7 @@ def create_hosts(dns_info, province, isp):
     for node in dns_info.keys():
         for domain in dns_info[node].keys():
             for ip in dns_info[node][domain].keys():
-                if dns_info[node][domain][ip]["province"] != province and dns_info[node][domain][ip]["isp"] == isp:
+                if dns_info[node][domain][ip]["province"] != "宁夏省" and dns_info[node][domain][ip]["province"] != "陕西省" and dns_info[node][domain][ip]["province"] != "湖北省" and dns_info[node][domain][ip]["province"] != province and dns_info[node][domain][ip]["isp"] == isp:
                     logging.info(f"{ip:<18}{domain:<28}{dns_info[node][domain][ip]['province']}-{dns_info[node][domain][ip]['isp']}")
                     host = f"{ip}\t{domain}"
                     if host not in hosts:

@@ -78,20 +78,24 @@ if __name__ == '__main__':
     # 启动程序
     logging.info(logo)
     logging.info("开始爬取资源...")
-    max_urls_to_find = 10
-    page_url_path = "../info/page_urls.txt"
-    download_url_path = "../info/download_url.txt"
+    max_urls_to_find = 50
+    page_url_path = "info/page_urls.txt"
+    download_url_path = "info/download_url.txt"
     # qihu.start(max_urls_to_find, page_url_path,  download_url_path)
+    with open(page_url_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            url = line.strip()
+            qihu.get_download_url(download_url_path,url)
     # if check_user_select() is True:
     logging.info("开始解析Url...")
-    dns_info = resolver.get_match_region_ip()
+    # dns_info = resolver.get_match_region_ip()
     # 只写入中国联通的dns解析，宁夏省除外
     time.sleep(1)
     province = input("请输入你想指定省份的解析结果（如：宁夏、湖北、甘肃）: ")
     isp = input("请输入你想指定运营商的解析结果（如：联通、移动、电信）: ")
-    if province is not None:
-        if "联通" or  "移动" or "电信" in isp:
-            create_hosts(dns_info, f"{province}省", f"中国{isp}")
+    # if province is not None:
+    #     if "联通" or  "移动" or "电信" in isp:
+            # create_hosts(dns_info, f"{province}省", f"中国{isp}")
 
     # 创建其他线程下载工具
     # 爬取资源

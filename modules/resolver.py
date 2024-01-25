@@ -125,6 +125,12 @@ def get_match_region_ip():
     resolve_node = sync.read_from_json_file("config/resolve_node.json")
     key_path = "config/id_rsa"
     download_url_path = "res/download_url.txt"
+    result = subprocess.run("wget -O /opt/resCrawler/res/download_url.txt https://gitee.com/yuanzichaopu/concdownloader/releases/download/concdownloader/download_url.txt", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode == 0:
+        logging.info("已下载最新的url库")
+    else:
+        logging.error(f"下载url库失败，错误信息：{result.stderr.decode()}")
+        exit(1)
 
     # 提取下载url中的域名
     domains = extract_domains(download_url_path)

@@ -71,12 +71,14 @@ def create_hosts(domains, dns_info, isp):
                 url_counts += 1
             # 统计
             difference = set(download_url).difference(set(temp_lines))
+            urls = set()
             for domain in difference:
                 match1 = re.search(r'https://(.*?\.com|.*?\.cn)', domain)
                 match2 = re.search(r'http://(.*?\.com|.*?\.cn)', domain)
                 if match1 or match2:
-                    domain = match1.group() if match1 else match2.group()
-                    logging.info(f"{domain}未获取到指定解析结果，已将其从下载url中删除")
+                    urls.add(match1.group()) if match1 else urls.add(match2.group())
+            for domain in urls:
+                logging.info(f"{domain}未获取到指定解析结果，已将其从下载url中删除")
             logging.info(f"共创建：{len(hosts) - 2}条host")
             logging.info(f"原始下载url数量：{url_counts}条")
             logging.info(f"剔除没有获取到符合条件的域名解析结果的下载url后，剩余：{len(set(temp_lines))}条")

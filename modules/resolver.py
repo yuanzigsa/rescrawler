@@ -24,45 +24,11 @@ def extract_domains(file_path):
 
 
 # 获取其他地域远程主机的域名解析结果
-# def get_remote_ip_resolve(node, ip, key_path, domains):
-#     try:
-#         # 创建 SSH 客户端
-#         ssh = paramiko.SSHClient()
-#         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#         # 连接到远程服务器
-#         ssh.connect(ip, username='root', key_filename=key_path)
-#         logging.info(f"已成功连接到 {node}-{ip} 节点，正在进行解析...\n"
-#                      "=================================================================================")
-#         # 执行域名解析命令
-#         domains_resolve_ip = {}
-#         for domain in domains:
-#             command = f"nslookup {domain}"
-#             stdin, stdout, stderr = ssh.exec_command(command)
-#             # 跳过前两行
-#             for _ in range(2):
-#                 stdout.readline()
-#             # 获取命令执行结果
-#             result = stdout.read().decode('utf-8')
-#             ipv4_addresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result)
-#             domains_resolve_ip[domain] = ipv4_addresses
-#             error_message = stderr.read().decode('utf-8')
-#             if error_message:
-#                 logging.error(f"在 {node}-{ip} 主机进行域名解析的时候出错: {error_message}")
-#
-#         ssh.close()
-#         return domains_resolve_ip
-#     except Exception as e:
-#         logging.error(f"连接到目标服务器 {node}-{ip} 出错: {e}")
-#         return None
-
-
-# 获取其他地域远程主机的域名解析结果
 def resolve_domain(node, ip, key_path, domains):
     try:
         # 创建 SSH 客户端
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
         # 连接到远程服务器
         ssh.connect(ip, username='root', key_filename=key_path)
         logging.info(f"已成功连接到 {node}-{ip} 节点，正在进行解析...\n"
@@ -70,26 +36,45 @@ def resolve_domain(node, ip, key_path, domains):
         resolve_result = dict()
         for domain in domains:
             # 执行域名解析命令
-            command = f"nslookup {domain}"
+            command = f"dig +short {domain}"
             stdin, stdout, stderr = ssh.exec_command(command)
-
-            # 跳过前两行
-            for _ in range(2):
-                stdout.readline()
-
             # 获取命令执行结果
             result = stdout.read().decode('utf-8')
             ipv4_addresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result)
             resolve_result[domain] = ipv4_addresses
-
         ssh.close()
-
         # 写入本地临时存储文件
         sync.write_to_json_file(resolve_result, f'info/{node}_resolve_result.json')
 
     except Exception as e:
         logging.error(f"在 {node}-{ip} 主机进行域名解析的时候出错: {e}")
         return None
+
+def resolve_domains():
+    def get_dns_ip(domain):
+        try:
+            # 运行 dig 命令并捕获输出
+            result = subprocess.check_output(['dig', '+short', domain], universal_newlines=True)
+            # 将输出按行拆分为列表
+            ip_addresses = result.strip().split('\n')
+            return ip_addresses
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing dig: {e}")
+            return None
+
+    # 替换为你想要查询的域名
+    domain_to_query = 'down.qq.com'
+
+    # 调用函数并获取结果
+    ip_addresses = get_dns_ip(domain_to_query)
+
+    # 打印结果
+    if ip_addresses:
+        print(f"IP addresses for {domain_to_query}: {', '.join(ip_addresses)}")
+    else:
+        print("Failed to retrieve IP addresses.")
+
+
 
 
 def get_remote_ip_resolve(nodes, key_path,  domains):
@@ -102,7 +87,7 @@ def get_remote_ip_resolve(nodes, key_path,  domains):
     # 等待所有线程完成
     for thread in threads:
         thread.join()
-    logging.info(f"域名解析完成，结果已保存info/dns_info.json文件中。")
+    logging.info("域名解析完成，结果已保存info/dns_info.json文件中。")
 
 
 # 查询IP归属地

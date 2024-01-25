@@ -38,3 +38,16 @@ def run(playwright: Playwright) -> None:
 
 with sync_playwright() as playwright:
     run(playwright)
+
+
+
+file_path = "res/download_url.txt"
+temp_lines = []
+
+with open(file_path, 'r', encoding='utf-8') as file:
+    for line in file:
+        if domain not in line:
+            temp_lines.append(line)
+
+with open(file_path, 'w', encoding='utf-8') as file:
+    file.writelines(temp_lines)

@@ -10,9 +10,12 @@ def extract_domains(file_path):
     domains = set()
     with open(file_path, 'r') as file:
         for line in file:
-            match = re.search(r'https://(.*?\.com|.*?\.cn)', line)
-            if match:
-                domains.add(match.group(1))
+            match1 = re.search(r'https://(.*?\.com|.*?\.cn)', line)
+            match2 = re.search(r'http://(.*?\.com|.*?\.cn)', line)
+            if match1:
+                domains.add(match1.group(1))
+            if match2:
+                domains.add(match2.group(1))
     return domains
 
 
@@ -82,7 +85,7 @@ def ip_region_search(ip_list):
 def get_match_region_ip():
     resolve_node = sync.read_from_json_file("config/resolve_node.json")
     key_path = "config/id_rsa"
-    download_url_path = "res/soft.txt"
+    download_url_path = "res/download_url.txt"
 
     # 提取下载url中的域名
     domains = extract_domains(download_url_path)
@@ -104,6 +107,6 @@ def get_match_region_ip():
             logging.warning(f"{node}-{resolve_node_ip}节点解析到的IP为空，可能是建立ssh连接失败，请检查")
     # 写入本地文件
     sync.write_to_json_file(dns_info, "info/dns_info.json")
-    return dns_info
+    return domains, dns_info
 
 

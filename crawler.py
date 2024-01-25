@@ -1,6 +1,5 @@
 import os
 import random
-import time
 import modules.qihu_crawler as qihu
 import modules.resolver as resolver
 from modules.logger import logging
@@ -42,6 +41,7 @@ def create_hosts(domains, dns_info, province, isp):
     if len(hosts) == 2:
         logging.error("未匹配到对应的结果，请检查！")
     else:
+        logging.info(f"共创建{len(hosts) - 2}条host")
         file_path = "res/download_url.txt"
         temp_lines = []
         host_domains = []
@@ -62,15 +62,16 @@ def create_hosts(domains, dns_info, province, isp):
         # 剔除没有获取到域名解析结果的下载url
         host_domains = set(host_domains)
         with open(file_path, "r", encoding="utf-8") as download_url:
-            logging.info(f"获取到的下载地址{download_url}")
+            url_counts = 0
             for url in download_url:
                 for domain in host_domains:
                     if domain in url:
                         temp_lines.append(url)
                     else:
                         logging.info(f"{domain} 未获取到指定解析结果，已将其从下载url中删除")
-
-        logging.info(f"可用下载url：{temp_lines}")
+                url_counts += 1
+            logging.info(f"原始下载url数量：{url_counts}个")
+            logging.info(f"剔除没有获取到域名解析结果的下载url后，剩余{len(temp_lines)}个")
         # 写入下载url
         with open(file_path, "w", encoding="utf-8") as download_url:
             temp_lines = list(set(temp_lines))
@@ -119,7 +120,7 @@ if __name__ == '__main__':
             # qihu.get_download_url(download_url_path,url)
     # if check_user_select() is True:
     logging.info("爬取未定义，直接开始解析！")
-    province = input("请输入你想指定省份的解析结果（如：宁夏、湖北、甘肃）: ")
+    province = input("请输入当前下载节点所属省份（如：宁夏、湖北、甘肃）: ")
     isp = input("请输入你想指定运营商的解析结果（如：联通、移动、电信）: ")
     logging.info("开始解析Url...")
     domains, dns_info = resolver.get_match_region_ip()
@@ -134,6 +135,3 @@ if __name__ == '__main__':
     # 解析域名 （外省解析）
     # 查IP归属
     # 写hosts
-    # ip =$(curl - s http: // myip.ipip.net)
-    # echo
-    # "My public IP address is: $ip"

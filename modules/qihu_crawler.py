@@ -5,7 +5,7 @@ import requests
 import threading
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
-from logger import logging
+from modules.logger import logging
 
 # 定义一个锁，用于同步访问计数器
 lock = threading.Lock()

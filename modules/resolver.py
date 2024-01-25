@@ -3,6 +3,7 @@ import paramiko
 import modules.sync as sync
 from modules.logger import logging
 from modules.xdbSearcher import XdbSearcher
+import concurrent.futures
 
 
 # 提取域名
@@ -20,36 +21,105 @@ def extract_domains(file_path):
 
 
 # 获取其他地域远程主机的域名解析结果
-def get_remote_ip_resolve(node, ip, key_path, domains):
+# def get_remote_ip_resolve(node, ip, key_path, domains):
+#     try:
+#         # 创建 SSH 客户端
+#         ssh = paramiko.SSHClient()
+#         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#         # 连接到远程服务器
+#         ssh.connect(ip, username='root', key_filename=key_path)
+#         logging.info(f"已成功连接到 {node}-{ip} 节点，正在进行解析...\n"
+#                      "=================================================================================")
+#         # 执行域名解析命令
+#         domains_resolve_ip = {}
+#         for domain in domains:
+#             command = f"nslookup {domain}"
+#             stdin, stdout, stderr = ssh.exec_command(command)
+#             # 跳过前两行
+#             for _ in range(2):
+#                 stdout.readline()
+#             # 获取命令执行结果
+#             result = stdout.read().decode('utf-8')
+#             ipv4_addresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result)
+#             domains_resolve_ip[domain] = ipv4_addresses
+#             error_message = stderr.read().decode('utf-8')
+#             if error_message:
+#                 logging.error(f"在 {node}-{ip} 主机进行域名解析的时候出错: {error_message}")
+#
+#         ssh.close()
+#         return domains_resolve_ip
+#     except Exception as e:
+#         logging.error(f"连接到目标服务器 {node}-{ip} 出错: {e}")
+#         return None
+
+
+# 获取其他地域远程主机的域名解析结果
+import paramiko
+import re
+import threading
+import logging
+
+
+def resolve_domain(node, ip, key_path, domain):
     try:
         # 创建 SSH 客户端
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
         # 连接到远程服务器
         ssh.connect(ip, username='root', key_filename=key_path)
         logging.info(f"已成功连接到 {node}-{ip} 节点，正在进行解析...\n"
                      "=================================================================================")
+
         # 执行域名解析命令
-        domains_resolve_ip = {}
-        for domain in domains:
-            command = f"nslookup {domain}"
-            stdin, stdout, stderr = ssh.exec_command(command)
-            # 跳过前两行
-            for _ in range(2):
-                stdout.readline()
-            # 获取命令执行结果
-            result = stdout.read().decode('utf-8')
-            ipv4_addresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result)
-            domains_resolve_ip[domain] = ipv4_addresses
-            error_message = stderr.read().decode('utf-8')
-            if error_message:
-                logging.error(f"在 {node}-{ip} 主机进行域名解析的时候出错: {error_message}")
+        command = f"nslookup {domain}"
+        stdin, stdout, stderr = ssh.exec_command(command)
+
+        # 跳过前两行
+        for _ in range(2):
+            stdout.readline()
+
+        # 获取命令执行结果
+        result = stdout.read().decode('utf-8')
+        ipv4_addresses = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', result)
 
         ssh.close()
-        return domains_resolve_ip
+        return domain, ipv4_addresses
+
     except Exception as e:
-        logging.error(f"连接到目标服务器 {node}-{ip} 出错: {e}")
-        return None
+        logging.error(f"在 {node}-{ip} 主机进行域名解析的时候出错: {e}")
+        return domain, None
+
+
+def get_remote_ip_resolve(nodes):
+    threads = []
+
+    # 定义要解析的域名列表
+    domains = ["example.com", "google.com", "github.com"]
+
+    # 遍历每个节点创建线程
+    for node, ip, key_path in nodes:
+        thread = threading.Thread(target=resolve_domain, args=(node, ip, key_path, domains))
+        threads.append(thread)
+        thread.start()
+
+    # 等待所有线程完成
+    for thread in threads:
+        thread.join()
+
+
+if __name__ == "__main__":
+    # 定义节点信息，包括节点名称、IP地址和SSH密钥路径
+    nodes = [("Node1", "192.168.1.1", "/path/to/key1.pem"),
+             ("Node2", "192.168.1.2", "/path/to/key2.pem"),
+             # Add more nodes as needed
+             ]
+
+    # 配置日志
+    logging.basicConfig(level=logging.INFO)
+
+    # 调用函数进行远程解析
+    get_remote_ip_resolve(nodes)
 
 
 # 查询IP归属地

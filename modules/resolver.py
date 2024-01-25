@@ -76,7 +76,6 @@ def resolve_domains():
 
 
 
-
 def get_remote_ip_resolve(nodes, key_path,  domains):
     threads = []
     # 遍历每个节点创建线程

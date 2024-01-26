@@ -1,5 +1,6 @@
 import re
 import os
+import sys
 import random
 import subprocess
 import modules.qihu_crawler as qihu
@@ -131,7 +132,12 @@ if __name__ == '__main__':
             # qihu.get_download_url(download_url_path,url)
     # if check_user_select() is True:
     logging.info("爬取未定义，直接开始解析！")
-    isp = input("请输入你想指定运营商的解析结果（如：联通、移动、电信）: ")
+    # 获取命令行参数
+    if len(sys.argv) < 2:
+        logging.warning("可以直接使用命令来进行指定运营商解析哦，如: python3 crawler.py 电信")
+        isp = input("请输入你想指定运营商的解析结果（如：联通、移动、电信）: ")
+    else:
+        isp = sys.argv[1]
     if "联通" or "移动" or "电信" in isp:
         isp = f"中国{isp}"
     else:
@@ -144,7 +150,8 @@ if __name__ == '__main__':
     subprocess.run("scp /opt/resCrawler/res/hosts root@8.222.161.51:/root/temp/", shell=True)
     subprocess.run("scp /opt/resCrawler/res/download_url_new.txt root@8.222.161.51:/root/temp/download_url.txt", shell=True)
     logging.info("已将url及hosts上传至中转服务器")
-    logging.info("请在SkytonOps平台中使用“【更新】url及hosts”功能，将其推送到指定下载节点")
+    logging.info("请在SkytonOPS平台中使用模板“【更新】url及hosts”功能，将其推送到指定下载节点")
+
     # 创建其他线程下载工具
     # 爬取资源
     # 提取域名

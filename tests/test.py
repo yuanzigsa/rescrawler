@@ -1,7 +1,8 @@
-import os
-import subprocess
+import sys
 
+if len(sys.argv) < 2:
+    print("Usage: python script.py [ISP]")
+    sys.exit(1)
 
-subprocess.run("rm -rf info/*", shell=True)
-
-print("yes")
+# 获取命令行参数
+isp = sys.argv[1]

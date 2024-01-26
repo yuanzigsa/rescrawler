@@ -119,9 +119,10 @@ def ip_region_search(ip_list):
 
 
 # 获取匹配的IP地址
-def get_match_region_ip():
+def get_match_region_ip(isp):
     subprocess.run("rm -rf info/*", shell=True)
-    resolve_node = sync.read_from_json_file("config/resolve_node.json")
+    resolve_node_all = sync.read_from_json_file("config/resolve_node.json")
+    resolve_node = resolve_node_all[isp]
     key_path = "config/id_rsa"
     download_url_path = "res/download_url.txt"
     result = subprocess.run("wget -O /opt/resCrawler/res/download_url.txt https://gitee.com/yuanzichaopu/concdownloader/releases/download/concdownloader/download_url.txt", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -1,6 +1,7 @@
 import re
 import os
 import random
+import subprocess
 import modules.qihu_crawler as qihu
 import modules.sync as sync
 import modules.resolver as resolver
@@ -78,7 +79,7 @@ def create_hosts(domains, dns_info, isp):
                 if match1 or match2:
                     urls.add(match1.group(1)) if match1 else urls.add(match2.group(1))
             for domain in urls:
-                logging.info(f"{domain} 未获取到指定解析结果，已将其从下载url中删除")
+                logging.warning(f"{domain} 未获取到指定解析结果，已将其从下载url中删除")
             logging.info(f"共创建：{len(hosts) - 2}条host")
             logging.info(f"原始下载url数量：{url_counts}条")
             logging.info(f"剔除没有获取到符合条件的域名解析结果的下载url后，剩余：{len(set(temp_lines))}条")
@@ -135,9 +136,12 @@ if __name__ == '__main__':
     else:
         logging.info("输入无效，程序退出！")
     logging.info("开始解析Url...")
-    domains, dns_info = resolver.get_match_region_ip()
+    domains, dns_info = resolver.get_match_region_ip(isp)
     # 创建指定运营商的解析host
     create_hosts(domains, dns_info, isp)
+    # 上传至服务器
+    subprocess.run("scp /opt/resCrawler/res/hosts root@118.182.250.31:/root/", shell=True)
+    subprocess.run("scp /opt/resCrawler/res/download_url.txt root@118.182.250.31:/root/", shell=True)
     # 创建其他线程下载工具
     # 爬取资源
     # 提取域名

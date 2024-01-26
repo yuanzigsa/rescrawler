@@ -84,11 +84,12 @@ def create_hosts(domains, dns_info, isp):
             logging.info(f"原始下载url数量：{url_counts}条")
             logging.info(f"剔除没有获取到符合条件的域名解析结果的下载url后，剩余：{len(set(temp_lines))}条")
         # 写入下载url
-        with open(file_path, "w", encoding="utf-8") as download_url:
+        with open("res/download_url_new.txt", "w", encoding="utf-8") as download_url:
             temp_lines = list(set(temp_lines))
             download_url.writelines(temp_lines)
-        logging.info("已创建本地hosts文件，请将res/hosts文件同步更新到目标服务器/etc/目录下")
-        logging.info("已创建本地download_url.txt文件，请将res/download_url.txt文件同步更新到目标服务器/opt/concdownloader/res/目录下 ")
+        logging.info("已创建本地hosts文件，路径：res/hosts")
+        logging.info("已创建本地download_url.txt文件，路径：res/download_url_new.txt")
+
 
 
 # 随机排列hosts列表
@@ -140,8 +141,10 @@ if __name__ == '__main__':
     # 创建指定运营商的解析host
     create_hosts(domains, dns_info, isp)
     # 上传至服务器
-    subprocess.run("scp /opt/resCrawler/res/hosts root@118.182.250.31:/root/", shell=True)
-    subprocess.run("scp /opt/resCrawler/res/download_url.txt root@118.182.250.31:/root/", shell=True)
+    subprocess.run("scp /opt/resCrawler/res/hosts root@8.222.161.51:/root/temp/", shell=True)
+    subprocess.run("scp /opt/resCrawler/res/download_url_new.txt root@8.222.161.51:/root/temp/download_url.txt", shell=True)
+    logging.info("已将url及hosts上传至中转服务器")
+    logging.info("请在SkytonOps平台中使用“【更新】url及hosts”功能，将其推送到指定下载节点")
     # 创建其他线程下载工具
     # 爬取资源
     # 提取域名

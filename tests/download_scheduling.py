@@ -1,24 +1,147 @@
-import schedule
+import os
 import time
+import json
+import paramiko
 import datetime
+import schedule
+import logging
+from logging.handlers import TimedRotatingFileHandler
 
-def one():
-    # 在这里写下你想要执行的函数的代码
-    print(f"{datetime.datetime.now()}Your function is executed at a specific time.111111111111")
-
-def two():
-    # 在这里写下你想要执行的函数的代码
-    print(f"{datetime.datetime.now()}Your function is executed at a specific time.222222222222")
-
-
-# 设置每天的执行时间，例如每天的10:30执行
-schedule.every().day.at("18:51").do(one)
-schedule.every().day.at("18:52").do(two)
+# 配置日志以方便维护
+log_directory = 'log'
+if not os.path.exists(log_directory):
+    os.makedirs(log_directory)
+log_file_path = os.path.join(log_directory, 'concdownloader.log')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+file_handler = TimedRotatingFileHandler(filename=log_file_path, when='midnight', interval=1,
+                                        backupCount=30)  # 日志文件按天滚动，保留时长为30天
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logging.getLogger().addHandler(file_handler)  # 将Handler添加到Logger中
 
 
-while True:
-    # 检查是否有要执行的任务
-    schedule.run_pending()
-    time.sleep(1)  # 每秒钟检查一次
+# 远程主机执行命令
+def run_command_on_server(server, command):
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(server['host'], port=server['port'], username=server['username'], password=server['password'])
 
-# 注意：这个程序会一直运行，你可以手动停止它或者根据你的需求修改程序的退出条件。
+        stdin, stdout, stderr = ssh.exec_command(command)
+        output = stdout.read().decode('utf-8')
+        error = stderr.read().decode('utf-8')
+        result = f"在 {server['host']} 上执行命令[{command}]的输出：\n{output if output else error}"
+        logging.info(result)
+        ssh.close()
+    except Exception as e:
+        result = f"在 {server['host']} 上执行命令[{command}]失败: {e}"
+        logging.error(result)
+
+
+# 中卫联通调度
+def zwlt_start():
+    node = "中卫联通"
+    logging.info(f"【开启{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service concdownloader start")
+
+
+def zwlt_stop():
+    node = "中卫联通"
+    logging.info(f"【停止{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service concdownloader stop")
+
+
+# 荆州联通城域网
+def jzltcyw_start():
+    node = "荆州联通城域网"
+    logging.info(f"【开启{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service auto_downloader start")
+
+
+def jzltcyw_stop():
+    node = "荆州联通城域网"
+    logging.info(f"【停止{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service auto_downloader stop")
+
+
+# 荆州联通
+def jzlt_start():
+    node = "荆州联通"
+    logging.info(f"【开启{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service auto_downloader start")
+
+
+def jzlt_stop():
+    node = "荆州联通"
+    logging.info(f"【停止{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service auto_downloader stop")
+
+
+# 宜昌联通
+def yclt_start():
+    node = "宜昌联通"
+    logging.info(f"【开启{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service auto_downloader start")
+
+
+def yclt_stop():
+    node = "宜昌联通"
+    logging.info(f"【停止{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service auto_downloader stop")
+
+
+# 兰州电信
+def lzdx_start():
+    node = "兰州电信"
+    logging.info(f"【开启{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service concdownloader start")
+
+
+def lzdx_stop():
+    node = "兰州电信"
+    logging.info(f"【停止{node}机器的下载程序...】")
+    for server in servers[node]:
+        server = servers[node][server]
+        run_command_on_server(server, "service concdownloader stop")
+
+
+if __name__ == '__main__':
+    logging.info("下载流量调度程序已启动")
+
+    with open("server_login_info.json", 'r', encoding='utf-8') as file:
+        servers = json.load(file)
+
+    schedule.every().day.at("19:00").do(zwlt_start)
+    schedule.every().day.at("19:00").do(jzltcyw_start)
+    schedule.every().day.at("23:00").do(jzlt_start)
+    schedule.every().day.at("19:00").do(yclt_start)
+    # schedule.every().day.at("19:00").do(lzdx_start)
+
+    schedule.every().day.at("23:00").do(zwlt_stop)
+    schedule.every().day.at("23:00").do(jzltcyw_stop)
+    schedule.every().day.at("23:00").do(jzlt_stop)
+    schedule.every().day.at("23:00").do(yclt_stop)
+    # schedule.every().day.at("23:00").do(lzdx_stop)
+
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+

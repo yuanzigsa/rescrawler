@@ -30,7 +30,11 @@ def resolve_domain(node, ip, key_path, domains):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         # 连接到远程服务器
-        ssh.connect(ip, username='root', key_filename=key_path)
+        if node == '广东电信':
+            # ssh端口为20001
+            ssh.connect(ip, username='root', port=20001, key_filename=key_path)
+        else:
+            ssh.connect(ip, username='root', key_filename=key_path)
         logging.info(f"已成功连接到 {node}-{ip} 节点，正在进行解析...\n"
                      "======================================================================================")
         resolve_result = dict()

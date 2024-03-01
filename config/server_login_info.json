@@ -1,8 +1,5 @@
-[   
-    {
-        "host": "8.222.161.51",
-        "port": 22,
-        "username": "root",
-        "password": "!Lijinyuan20"
-    }
-]
+{
+    "host": "118.182.250.151",
+    "port": 4222
+}
+

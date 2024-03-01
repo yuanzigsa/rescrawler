@@ -1,13 +1,13 @@
 import re
 import os
 import sys
+import json
 import random
 import subprocess
 import modules.qihu_crawler as qihu
 import modules.sync as sync
 import modules.resolver as resolver
 from modules.logger import logging
-
 
 # Time : 2024/1/13
 # Author : yuanzi
@@ -22,7 +22,7 @@ logo = f"""开始启动ResCrawler程序...\n
 ░██  ░░██ ░██░░░░  ░░░░░██░░██    ██ ░██    ██░░░░██  ░████░████ ░██░██░░░░  ░██   
 ░██   ░░██░░██████ ██████  ░░██████ ░███   ░░████████ ███░ ░░░██ ███░░██████░███   
 ░░     ░░  ░░░░░░ ░░░░░░    ░░░░░░  ░░░     ░░░░░░░░ ░░░    ░░░ ░░░  ░░░░░░ ░░░    
-  
+
 【程序版本】：v1.0
 【更新时间】：2024/1/24
 【当前路径】：{os.getcwd()}
@@ -39,7 +39,8 @@ def create_hosts(domains, dns_info, isp):
         for domain in dns_info[node].keys():
             for ip in dns_info[node][domain].keys():
                 if dns_info[node][domain][ip]["isp"] == isp and dns_info[node][domain][ip]["province"] not in our_node[isp]:
-                    logging.info(f"{ip:<18}{domain:<28}{dns_info[node][domain][ip]['province']}-{dns_info[node][domain][ip]['isp']}")
+                    logging.info(
+                        f"{ip:<18}{domain:<28}{dns_info[node][domain][ip]['province']}-{dns_info[node][domain][ip]['isp']}")
                     host = f"{ip}\t{domain}"
                     if host not in hosts:
                         hosts.append(host)
@@ -92,7 +93,6 @@ def create_hosts(domains, dns_info, isp):
         logging.info("已创建本地download_url.txt文件，路径：res/download_url_new.txt")
 
 
-
 # 随机排列hosts列表
 def random_hosts():
     with open('res/hosts', 'r') as file:
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     # with open(page_url_path, 'r', encoding='utf-8') as file:
     #     for line in file:
     #         url = line.strip()
-            # qihu.get_download_url(download_url_path,url)
+    # qihu.get_download_url(download_url_path,url)
     # if check_user_select() is True:
     logging.info("爬取未定义，直接开始解析！")
     # 获取命令行参数
@@ -147,8 +147,14 @@ if __name__ == '__main__':
     # 创建指定运营商的解析host
     create_hosts(domains, dns_info, isp)
     # 上传至服务器
-    subprocess.run("scp /opt/resCrawler/res/hosts root@8.222.161.51:/root/temp/", shell=True)
-    subprocess.run("scp /opt/resCrawler/res/download_url_new.txt root@8.222.161.51:/root/temp/download_url.txt", shell=True)
+    with open("config/server_login_info.json", 'r') as f:
+        server_info = json.load(f)
+    host = server_info['host']
+    port = server_info['port']
+    subprocess.run(f"scp -P {port} /opt/resCrawler/res/hosts root@{host}:/root/temp/", shell=True)
+    subprocess.run(
+        f"scp -P {port} /opt/resCrawler/res/download_url_new.txt root@{host}:/root/temp/download_url.txt",
+        shell=True)
     logging.info("已将url及hosts上传至中转服务器")
     logging.info("请在SkytonOPS平台中使用模板“【更新】url及hosts”功能，将其推送到指定下载节点")
 

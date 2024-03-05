@@ -24,17 +24,13 @@ def extract_domains(file_path):
 
 
 # 获取其他地域远程主机的域名解析结果
-def resolve_domain(node, ip, key_path, domains):
+def resolve_domain(node, ip, port, key_path, domains):
     try:
         # 创建 SSH 客户端
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         # 连接到远程服务器
-        if node == '广东电信':
-            # ssh端口为20001
-            ssh.connect(ip, username='root', port=20001, key_filename=key_path)
-        else:
-            ssh.connect(ip, username='root', key_filename=key_path)
+        ssh.connect(ip, username='root', port=port, key_filename=key_path)
         logging.info(f"已成功连接到 {node}-{ip} 节点，正在进行解析...\n"
                      "======================================================================================")
         resolve_result = dict()
@@ -84,7 +80,7 @@ def get_remote_ip_resolve(nodes, key_path,  domains):
     threads = []
     # 遍历每个节点创建线程
     for node in nodes:
-        thread = threading.Thread(target=resolve_domain, args=(node, nodes[node], key_path, domains))
+        thread = threading.Thread(target=resolve_domain, args=(node, nodes[node]['ip'], nodes[node]['port'], key_path, domains))
         threads.append(thread)
         thread.start()
     # 等待所有线程完成

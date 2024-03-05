@@ -1,4 +1,4 @@
-<img src="C:\Users\lijin\AppData\Roaming\Typora\typora-user-images\image-20240229163321079.png" alt="image-20240229163321079" style="zoom: 67%;" />
+![image](https://github.com/yuanzigsa/rescrawler/assets/30451380/5f473049-ccc1-4bd7-90cd-2a51a4a8701b)
 
 # Rescrawler (资源爬取及DNS解析程序)
 
